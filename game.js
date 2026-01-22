@@ -280,7 +280,7 @@ function draw() {
   drawText(`BPM: ${BPM}`, 20, 96, 14);
 
   if (!playing) {
-    drawText(newRecord ? "REKOR BARU!" : "CRASH", canvas.width/2 - 90, canvas.height/2 - 10, 32);
+    drawText(newRecord ? "REKOR BARU!" : "MELEDAKS", canvas.width/2 - 90, canvas.height/2 - 10, 32);
   }
 }
 
@@ -291,3 +291,4 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
+
