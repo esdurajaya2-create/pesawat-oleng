@@ -88,11 +88,19 @@ let crashY = 0;
 /* ================= INPUT ================= */
 function press() {
   hold = true;
-  if (music.paused && playing) {
+
+  if (music.paused) {
     music.currentTime = 0.01;
     music.play().catch(() => {});
   }
+
+  // unlock audio ledakan
+  explodeSound.play().then(() => {
+    explodeSound.pause();
+    explodeSound.currentTime = 0;
+  }).catch(()=>{});
 }
+
 function release() { hold = false; }
 
 window.addEventListener("mousedown", press);
@@ -299,6 +307,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
+
 
 
 
