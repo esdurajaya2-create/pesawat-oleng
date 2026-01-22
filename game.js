@@ -274,9 +274,9 @@ function draw() {
   ctx.setTransform(1,0,0,1,0,0);
 
   /* UI */
-  drawText(`SCORE: ${score}`, 20, 32);
-  drawText(`HIGH SCORE: ${highScore} (${highName})`, 20, 54, 14);
-  drawText(`1 TURBULENCE = 1 POINT`, 20, 74, 14);
+  drawText(`SKOR: ${score}`, 20, 32);
+  drawText(`SKOR TERTINGGI: ${highScore} (${highName})`, 20, 54, 14);
+  drawText(`LEWAT 1 TURBULENCE = 1 POINT`, 20, 74, 14);
   drawText(`BPM: ${BPM}`, 20, 96, 14);
 
   if (!playing) {
@@ -291,4 +291,5 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
+
 
