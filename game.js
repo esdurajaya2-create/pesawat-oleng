@@ -21,6 +21,10 @@ turbPanicImg.src = "turbulence_panic.png";
 const explodeImg = new Image();
 explodeImg.src = "meledak.png";
 
+const explodeSound = new Audio("ledakan.wav");
+explodeSound.volume = 0.8; // atur volume (0.0 - 1.0)
+
+
 /* ================= CONFIG ================= */
 const BEAT_WINDOW = 0.18;
 let BPM = 120;
@@ -199,6 +203,10 @@ function crash() {
 
   music.pause();
 
+    explodeSound.currentTime = 0;
+  explodeSound.play().catch(()=>{});
+
+
   if (score > highScore) {
     newRecord = true;
     setTimeout(() => {
@@ -291,5 +299,6 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
+
 
 
