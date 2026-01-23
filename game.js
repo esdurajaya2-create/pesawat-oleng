@@ -1,4 +1,4 @@
-﻿const canvas = document.getElementById("game");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const music = document.getElementById("music");
 
@@ -22,8 +22,14 @@ const explodeImg = new Image();
 explodeImg.src = "meledak.png";
 
 const explodeSound = new Audio("ledakan.wav");
-explodeSound.volume = 0.8; // atur volume (0.0 - 1.0)
+explodeSound.volume = 0.8;
 
+// === DEDEN ASSET (NEW) ===
+const dedenImg = new Image();
+dedenImg.src = "deden.png";
+
+const dedenSound = new Audio("deden.wav");
+dedenSound.volume = 1.0;
 
 /* ================= CONFIG ================= */
 const BEAT_WINDOW = 0.18;
@@ -85,6 +91,15 @@ let expTick = 0;
 let crashX = 0;
 let crashY = 0;
 
+/* ================= DEDEN STATE (NEW) ================= */
+let showDeden = false;
+let dedenFrame = 0;
+let dedenTick = 0;
+let dedenPlayed = false;
+
+const DEDEN_FRAMES = 2;
+const DEDEN_SPEED = 12;
+
 /* ================= INPUT ================= */
 function press() {
   hold = true;
@@ -94,10 +109,15 @@ function press() {
     music.play().catch(() => {});
   }
 
-  // unlock audio ledakan
+  // unlock audio
   explodeSound.play().then(() => {
     explodeSound.pause();
     explodeSound.currentTime = 0;
+  }).catch(()=>{});
+
+  dedenSound.play().then(() => {
+    dedenSound.pause();
+    dedenSound.currentTime = 0;
   }).catch(()=>{});
 }
 
@@ -126,6 +146,11 @@ function resetGame() {
   expFrame = 0;
   expTick = 0;
 
+  showDeden = false;
+  dedenFrame = 0;
+  dedenTick = 0;
+  dedenPlayed = false;
+
   turbulenceState = true;
   turbulenceHold = 0;
   wasInZone = false;
@@ -137,7 +162,6 @@ function resetGame() {
 function update() {
   if (!playing) return;
 
-  /* BEAT */
   if (!music.paused) {
     const interval = 60 / BPM;
     beatSafe = (music.currentTime % interval) < BEAT_WINDOW;
@@ -145,7 +169,6 @@ function update() {
     beatSafe = false;
   }
 
-  /* TURBULENCE SMOOTH */
   if (turbulenceHold > 0) {
     turbulenceHold--;
   } else if (turbulenceState !== beatSafe) {
@@ -158,7 +181,6 @@ function update() {
     BPM = Math.min(BPM + 5, 160);
   }
 
-  /* PHYSICS */
   velocity += gravity;
   if (hold) {
     velocity -= thrust;
@@ -171,7 +193,6 @@ function update() {
 
   if (y < 0 || y > canvas.height) crash();
 
-  /* SPAWN TURBULENCE */
   spawnTimer++;
   if (spawnTimer > 120) {
     spawnTimer = 0;
@@ -181,9 +202,7 @@ function update() {
   zones.forEach(z => z.x -= 3);
   zones = zones.filter(z => z.x > -200);
 
-  /* CHECK ZONE */
   let inZone = false;
-
   zones.forEach(z => {
     if (plane.x > z.x && plane.x < z.x + z.w) {
       inZone = true;
@@ -194,7 +213,6 @@ function update() {
     }
   });
 
-  /* SCORE: 1 turbulence terlewati */
   if (wasInZone && !inZone) score++;
   wasInZone = inZone;
 }
@@ -210,10 +228,8 @@ function crash() {
   crashY = y;
 
   music.pause();
-
-    explodeSound.currentTime = 0;
+  explodeSound.currentTime = 0;
   explodeSound.play().catch(()=>{});
-
 
   if (score > highScore) {
     newRecord = true;
@@ -226,10 +242,10 @@ function crash() {
     }, 300);
   }
 
-  setTimeout(resetGame, 2200);
+  setTimeout(resetGame, 2600);
 }
 
-/* ================= TEXT HELPER ================= */
+/* ================= TEXT ================= */
 function drawText(text, x, y, size = 18) {
   ctx.font = `${size}px monospace`;
   ctx.lineWidth = 4;
@@ -241,25 +257,21 @@ function drawText(text, x, y, size = 18) {
 
 /* ================= DRAW ================= */
 function draw() {
-  /* BACKGROUND */
   bgX -= bgSpeed;
   if (bgX <= -bg.width) bgX = 0;
   ctx.drawImage(bg, bgX, 0, bg.width, canvas.height);
   ctx.drawImage(bg, bgX + bg.width, 0, bg.width, canvas.height);
 
-  /* CAMERA */
   const sx = (Math.random() - 0.5) * camShake;
   const sy = (Math.random() - 0.5) * camShake;
   camShake *= 0.85;
   ctx.setTransform(1, 0, 0, 1, sx, sy);
 
-  /* TURBULENCE */
   zones.forEach(z => {
     const img = turbulenceState ? turbSafeImg : turbPanicImg;
     ctx.drawImage(img, z.x, 0, z.w, canvas.height);
   });
 
-  /* PLANE */
   if (!crashed) {
     ctx.save();
     ctx.translate(plane.x, y);
@@ -268,7 +280,6 @@ function draw() {
     ctx.restore();
   }
 
-  /* EXPLOSION */
   if (crashed && expFrame < EXP_FRAME_COUNT) {
     expTick++;
     if (expTick % EXP_FRAME_SPEED === 0) expFrame++;
@@ -285,18 +296,46 @@ function draw() {
       size,
       size
     );
+
+    if (expFrame >= EXP_FRAME_COUNT - 1) {
+      showDeden = true;
+      if (!dedenPlayed) {
+        dedenPlayed = true;
+        dedenSound.currentTime = 0;
+        dedenSound.play().catch(()=>{});
+      }
+    }
   }
 
   ctx.setTransform(1,0,0,1,0,0);
 
-  /* UI */
+  /* DEDEN */
+  if (showDeden) {
+    dedenTick++;
+    if (dedenTick % DEDEN_SPEED === 0) {
+      dedenFrame = (dedenFrame + 1) % DEDEN_FRAMES;
+    }
+
+    const fw = dedenImg.width / DEDEN_FRAMES;
+    const fh = dedenImg.height;
+
+    ctx.drawImage(
+      dedenImg,
+      dedenFrame * fw, 0, fw, fh,
+      canvas.width/2 - 110,
+      canvas.height/2 - 260,
+      220,
+      220
+    );
+  }
+
   drawText(`SKOR: ${score}`, 20, 32);
   drawText(`SKOR TERTINGGI: ${highScore} (${highName})`, 20, 54, 14);
   drawText(`LEWAT 1 TURBULENCE = 1 POINT`, 20, 74, 14);
   drawText(`BPM: ${BPM}`, 20, 96, 14);
 
   if (!playing) {
-    drawText(newRecord ? "REKOR BARU!" : "MELEDAKS", canvas.width/2 - 90, canvas.height/2 - 10, 32);
+    drawText(newRecord ? "REKOR BARU!" : "MELEDAKS", canvas.width/2 - 100, canvas.height/2 - 10, 32);
   }
 }
 
@@ -307,7 +346,3 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
-
-
-
-
